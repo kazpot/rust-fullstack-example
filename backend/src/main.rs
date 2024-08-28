@@ -1,7 +1,13 @@
 mod handlers;
+mod models;
+mod repository;
+mod services;
 
+use crate::repository::ProductRepository;
+use crate::services::ProductService;
 use axum::{routing::get, Router};
 use sqlx::{MySql, Pool};
+use std::sync::Arc;
 use tower_http::cors::{Any, CorsLayer};
 
 #[tokio::main]
@@ -30,6 +36,9 @@ async fn main() {
     .await
     .expect("Failed to create table");
 
+    let product_repository = ProductRepository::new(pool);
+    let product_service = Arc::new(ProductService::new(product_repository));
+
     let app = Router::new()
         .route("/home", get(root))
         .route(
@@ -42,7 +51,7 @@ async fn main() {
                 .delete(handlers::delete_product)
                 .put(handlers::update_product),
         )
-        .with_state(pool)
+        .with_state(product_service)
         .layer(cors);
 
     tracing::info!("listening on port {}", "0.0.0.0:3000");

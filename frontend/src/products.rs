@@ -16,8 +16,16 @@ pub fn products() -> Html {
     let data: UseStateHandle<Vec<Product>> = use_state(|| vec![]);
     let data_clone = data.clone();
 
+    let refresh = use_state(|| 0);
+    let refresh_clone = refresh.clone(); 
+
+    let onclick = Callback::from(move |_| {
+        let current_value = *refresh_clone;
+        refresh_clone.set(current_value + 1);
+    });
+
     {
-        use_effect_with((), move |_| {
+        use_effect_with([refresh.clone()], move |_| {
             wasm_bindgen_futures::spawn_local(async move {
                 let fetched_data = reqwest::get("http://localhost:3000/api/products")
                 .await
@@ -41,6 +49,10 @@ pub fn products() -> Html {
         <div class="container">
             <button class="btn-primary">
                 <Link<Route> to={Route::AddProduct}>{"Add new Product"}</Link<Route>>
+            </button>
+            <br /> <br />
+            <button class="btn-primary" {onclick}>
+                {"refresh"}
             </button>
             <h2>{"List of Products: "} {data.len()}</h2>
             <p>{products}</p>

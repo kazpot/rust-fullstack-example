@@ -1,10 +1,9 @@
-use yew::prelude::*;
-use yew_router::prelude::*;
-
 mod products;
 mod form;
-
 mod router;
+
+use yew::prelude::*;
+use yew_router::prelude::*;
 use router::{Route, switch};
 
 #[function_component(App)]

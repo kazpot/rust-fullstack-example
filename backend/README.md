@@ -1,7 +1,7 @@
 ## Backend
 
 * Layered Architecture ✅
-* sqlx migrate (sqlx-cli)
+* sqlx migrate (sqlx-cli) ✅
 * Service key management
 * Unit test
 

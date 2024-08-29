@@ -25,17 +25,6 @@ async fn main() {
         .await
         .expect("Error with pool connection");
 
-    sqlx::query(
-        r#"CREATE TABLE IF NOT EXISTS products (
-          id serial,
-          name text,
-          price integer
-        );"#,
-    )
-    .execute(&pool)
-    .await
-    .expect("Failed to create table");
-
     let product_repository = ProductRepository::new(pool);
     let product_service = Arc::new(ProductService::new(product_repository));
 
@@ -61,5 +50,5 @@ async fn main() {
 }
 
 async fn root() -> &'static str {
-    "Hello, World! axum api"
+    "Home"
 }

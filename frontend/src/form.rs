@@ -2,7 +2,7 @@ use web_sys::HtmlInputElement;
 use yew::prelude::*;
 use serde_json::json;
 use yew_router::hooks::use_navigator;
-
+use reqwest::header::{AUTHORIZATION, HeaderValue};
 use crate::router::Route;
 
 #[function_component(Form)]
@@ -27,6 +27,7 @@ pub fn form() -> Html {
   
         let client = reqwest::Client::new();
         let _ = client.post("http://localhost:3000/api/products")
+            .header(AUTHORIZATION, HeaderValue::from_str("Bearer your_secret_api_key").unwrap())
             .json(&product)
             .send()
             .await;

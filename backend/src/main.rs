@@ -6,10 +6,35 @@ mod services;
 use crate::repository::product_repository::ProductRepositoryTrait;
 use crate::repository::ProductRepository;
 use crate::services::ProductService;
-use axum::{routing::get, Router};
+use axum::{
+    extract::Request,
+    http::StatusCode,
+    middleware::{self, Next},
+    response::Response,
+    routing::get,
+    Router,
+};
+use axum_extra::{
+    headers::{authorization::Bearer, Authorization},
+    TypedHeader,
+};
 use sqlx::{MySql, Pool};
 use std::sync::Arc;
 use tower_http::cors::{Any, CorsLayer};
+
+async fn api_key_check(
+    TypedHeader(Authorization(bearer)): TypedHeader<Authorization<Bearer>>,
+    req: Request,
+    next: Next,
+) -> Result<Response, StatusCode> {
+    let api_key = bearer.token();
+
+    if api_key == "your_secret_api_key" {
+        Ok(next.run(req).await)
+    } else {
+        Err(StatusCode::UNAUTHORIZED)
+    }
+}
 
 #[tokio::main]
 async fn main() {
@@ -44,6 +69,7 @@ async fn main() {
                 .put(handlers::update_product),
         )
         .with_state(product_service)
+        .layer(middleware::from_fn(api_key_check))
         .layer(cors);
 
     tracing::info!("listening on port {}", "0.0.0.0:3000");

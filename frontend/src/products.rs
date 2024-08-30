@@ -1,3 +1,4 @@
+use reqwest::{header::{HeaderValue, AUTHORIZATION}, Client};
 use yew::prelude::*;
 use yew_router::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -27,12 +28,16 @@ pub fn products() -> Html {
     {
         use_effect_with([refresh.clone()], move |_| {
             wasm_bindgen_futures::spawn_local(async move {
-                let fetched_data = reqwest::get("http://localhost:3000/api/products")
-                .await
-                .expect("cannot get data from url")
-                .json::<Vec<Product>>()
-                .await
-                .expect("cannot convert to json");
+                let client = Client::new();
+                let fetched_data = client
+                    .get("http://localhost:3000/api/products")
+                    .header(AUTHORIZATION, HeaderValue::from_str("Bearer your_secret_api_key").unwrap())
+                    .send()
+                    .await
+                    .expect("cannot get data from url")
+                    .json::<Vec<Product>>()
+                    .await
+                    .expect("cannot convert to json");
                 data_clone.set(fetched_data);
             });
             || ()

@@ -1,7 +1,4 @@
 use crate::models::{NewProduct, Product};
-use axum::http::StatusCode;
-use axum::Json;
-use serde_json::{json, Value};
 use sqlx::{MySql, Pool};
 
 pub struct ProductRepository {
@@ -13,85 +10,50 @@ impl ProductRepository {
         Self { pool }
     }
 
-    pub async fn create_product(
-        &self,
-        product: NewProduct,
-    ) -> Result<Json<Value>, (StatusCode, String)> {
+    pub async fn create_product(&self, product: NewProduct) -> Result<NewProduct, String> {
         sqlx::query("INSERT INTO products (name, price) VALUES (?, ?)")
             .bind(&product.name)
             .bind(&product.price)
             .execute(&self.pool)
             .await
-            .map_err(|err| {
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    format!("Error is: {:?}", err),
-                )
-            })?;
-        Ok(Json(json!(product)))
+            .map_err(|err| format!("Error is: {:?}", err))?;
+        Ok(product)
     }
 
-    pub async fn get_products(&self) -> Result<Json<Vec<Product>>, (StatusCode, String)> {
+    pub async fn get_products(&self) -> Result<Vec<Product>, String> {
         let products = sqlx::query_as("SELECT * FROM products")
             .fetch_all(&self.pool)
             .await
-            .map_err(|err| {
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    format!("Error is {:?}", err),
-                )
-            })?;
-        Ok(Json(products))
+            .map_err(|err| format!("Error is {:?}", err))?;
+        Ok(products)
     }
 
-    pub async fn get_one_product(&self, id: u64) -> Result<Json<Product>, (StatusCode, String)> {
+    pub async fn get_one_product(&self, id: u64) -> Result<Product, sqlx::Error> {
         let product = sqlx::query_as("SELECT * FROM products WHERE id = ?")
             .bind(id)
             .fetch_one(&self.pool)
             .await
-            .map_err(|err| match err {
-                sqlx::Error::RowNotFound => (StatusCode::NOT_FOUND, format!("Error is: {:?}", err)),
-                _ => (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    format!("Error is: {:?}", err),
-                ),
-            })?;
-        Ok(Json(product))
+            .map_err(|err| err)?;
+        Ok(product)
     }
 
-    pub async fn delete_product(&self, id: u64) -> Result<Json<Value>, (StatusCode, String)> {
+    pub async fn delete_product(&self, id: u64) -> Result<(), sqlx::Error> {
         sqlx::query("DELETE FROM products WHERE id = ?")
             .bind(id)
             .execute(&self.pool)
             .await
-            .map_err(|err| match err {
-                sqlx::Error::RowNotFound => (StatusCode::NOT_FOUND, format!("Error is: {:?}", err)),
-                _ => (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    format!("Error is: {:?}", err),
-                ),
-            })?;
-        Ok(Json(json!({"msg": "Product deleted successfully"})))
+            .map_err(|err| err)?;
+        Ok(())
     }
 
-    pub async fn update_product(
-        &self,
-        id: u64,
-        product: Product,
-    ) -> Result<Json<Value>, (StatusCode, String)> {
+    pub async fn update_product(&self, id: u64, product: Product) -> Result<(), sqlx::Error> {
         sqlx::query("UPDATE products SET name = ?, price = ? WHERE id = ?")
             .bind(&product.name)
             .bind(&product.price)
             .bind(id)
             .execute(&self.pool)
             .await
-            .map_err(|err| match err {
-                sqlx::Error::RowNotFound => (StatusCode::NOT_FOUND, format!("Error is: {:?}", err)),
-                _ => (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    format!("Error is: {:?}", err),
-                ),
-            })?;
-        Ok(Json(json!({"msg": "Product updated successfully"})))
+            .map_err(|err| err)?;
+        Ok(())
     }
 }

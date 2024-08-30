@@ -3,6 +3,10 @@ name = "axum-api"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+name = "backend"
+path = "src/lib.rs"
+
 [dependencies]
 tokio = { version = "1.39.3", features = ["full"] }
 tracing = "0.1.40"
@@ -14,3 +18,4 @@ dotenv = "0.15.0"
 sqlx = { version = "0.8.0", features = ["runtime-tokio-rustls", "json", "mysql", "macros"] }
 serde = "1.0.208"
 serde_json = "1.0.125"
+async-trait = "0.1.81"

@@ -3,6 +3,7 @@ mod models;
 mod repository;
 mod services;
 
+use crate::repository::product_repository::ProductRepositoryTrait;
 use crate::repository::ProductRepository;
 use crate::services::ProductService;
 use axum::{routing::get, Router};
@@ -14,18 +15,20 @@ use tower_http::cors::{Any, CorsLayer};
 async fn main() {
     tracing_subscriber::fmt::init();
 
+    dotenv::dotenv().ok();
+
     let cors: CorsLayer = CorsLayer::new()
         .allow_origin(Any)
         .allow_methods(Any)
         .allow_headers(Any);
 
-    dotenv::dotenv().ok();
     let database_url: String = std::env::var("DATABASE_URL").expect("DATABASE_URL not set");
     let pool: Pool<MySql> = sqlx::MySqlPool::connect(&database_url)
         .await
         .expect("Error with pool connection");
 
-    let product_repository = ProductRepository::new(pool);
+    let product_repository =
+        Arc::new(ProductRepository::new(pool)) as Arc<dyn ProductRepositoryTrait>;
     let product_service = Arc::new(ProductService::new(product_repository));
 
     let app = Router::new()
@@ -46,7 +49,9 @@ async fn main() {
     tracing::info!("listening on port {}", "0.0.0.0:3000");
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
-    axum::serve(listener, app).await.unwrap();
+    axum::serve(listener, app.into_make_service())
+        .await
+        .unwrap();
 }
 
 async fn root() -> &'static str {

@@ -1,12 +1,13 @@
 use crate::models::{NewProduct, Product};
-use crate::repository::ProductRepository;
+use crate::repository::product_repository::ProductRepositoryTrait;
+use std::sync::Arc;
 
 pub struct ProductService {
-    repository: ProductRepository,
+    repository: Arc<dyn ProductRepositoryTrait>,
 }
 
 impl ProductService {
-    pub fn new(repository: ProductRepository) -> Self {
+    pub fn new(repository: Arc<dyn ProductRepositoryTrait>) -> Self {
         Self { repository }
     }
 
